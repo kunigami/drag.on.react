@@ -39,7 +39,7 @@ var Example = React.createClass({
   render: function() {
     return (
       <div>
-        <h1>Drag.on - Drag and Drop</h1>
+        <h1>Drag.on - A Drag-n-drop dashboard framework</h1>
         <Dragon
           data={this.state.widgetMap}
           width={800}

@@ -38,8 +38,7 @@ var Collision = {
     var newTop = rect.top;
     for (var ii = 0; ii < fixedRectList.length; ii++) {
       var fixedRect = fixedRectList[ii];
-      // They never intercept on the X axis. Unnaffected
-      if (!this.isCollisionX(fixedRect, rect)) {
+      if (!this.isCollision(fixedRect, rect)) {
         continue;
       }
       newTop = Math.max(newTop, fixedRect.top + fixedRect.height);
@@ -55,7 +54,6 @@ var Collision = {
   },
 
   /**
-   *
    * Complexity: O(n**2). TODO: can be improved with a interval
    * tree. Worth it?
    */
