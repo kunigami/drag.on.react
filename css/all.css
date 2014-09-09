@@ -1,8 +1,11 @@
+.html {
+  box-sizing: border-box
+}
+
 .widget {
   position: absolute;
-  border: 1px solid #939CFA;
+  border: 1px solid #aaa;
   z-index: 2;
-  background-color: #D5D7ED;
 }
 
 .placeholder {
@@ -15,4 +18,36 @@
   background-color: #DBDBDB;
   position: relative;
   z-index: 0;
+}
+
+.body {
+  height: 100%;
+  position: relative;
+}
+
+.content {
+  background-color: #fff;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  padding: 5px;
+  box-sizing: border-box;
+  top: 20px; /*=title height*/
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+}
+
+.handle {
+  cursor: move;
+}
+
+.title {
+  background-color: #ccc;
+  color: #666;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  padding: 3px;
+  height: 20px;
+  box-sizing: border-box;
 }

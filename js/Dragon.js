@@ -68,12 +68,16 @@ var Dragon = React.createClass({
     var widgetKeys = Object.keys(data);
     var listItems = widgetKeys.map(function(key) {
       var item = data[key];
+      var height = scale(item.height) - 2*margin;
+      var width  = scale(item.width) - 2*margin;
       var blockStyle = {
-        width: scale(item.width) - 2*margin,
-        height: scale(item.height) - 2*margin,
+        width: width,
+        height: height,
         top: scale(item.top) + margin,
         left: scale(item.left) + margin,
       };
+      this.props.children.containerHeight = height;
+      this.props.children.containerWidth = width;
       return (
         <div
           style={blockStyle}
@@ -81,9 +85,10 @@ var Dragon = React.createClass({
           key={key}
           className="widget"
           draggable="true"
+          onMouseDown={this.registerClick}
           onDragEnd={this.dragEnd}
           onDragStart={this.dragStart}>
-            #{key}
+            {this.props.children}
         </div>
       );
     }.bind(this));
@@ -124,6 +129,10 @@ var Dragon = React.createClass({
     );
   },
 
+  registerClick: function(e) {
+    this.target = e.target;
+  },
+
   dragStart: function(e) {
     this.dragged   = e.currentTarget;
     this.startX    = e.clientX;
@@ -131,6 +140,12 @@ var Dragon = React.createClass({
     this.startTop  = this.dragged.offsetTop;
     this.startLeft = this.dragged.offsetLeft;
     e.dataTransfer.effectAllowed = 'move';
+
+    // Only allow dragging from the handle
+    if (!this.isHandle(this.target)) {
+      e.preventDefault();
+      return;
+    }
 
     // Firefox requires calling dataTransfer.setData
     // for the drag to properly work
@@ -148,7 +163,6 @@ var Dragon = React.createClass({
     this.dragged.style.display = "none";
 
     var from = this.dragged.dataset.id;
-
     var newOffset = this.getCellPositionFromEvent(e);
 
     if (this.state.dragState == DragState.OVER) {
@@ -230,6 +244,16 @@ var Dragon = React.createClass({
       width: fromRect.width,
       height: fromRect.height,
     };
+  },
+
+  isHandle: function(node) {
+    if (!node || node.classList.contains('container')) {
+      return false;
+    }
+    if (node.classList.contains('handle')) {
+      return true;
+    }
+    return this.isHandle(node.parentNode);
   }
 });
 

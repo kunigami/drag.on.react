@@ -44,8 +44,16 @@ var Example = React.createClass({
           data={this.state.widgetMap}
           width={800}
           height={600}
-          onDataChange={this.updateWidgetMap}
-        />
+          onDataChange={this.updateWidgetMap}>
+          <div className="body">
+            <div className="handle title">
+              Title (grip)
+            </div>
+            <div className="content">
+              hello world
+            </div>
+          </div>
+        </Dragon>
       </div>
     );
   },
