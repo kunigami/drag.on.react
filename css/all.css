@@ -3,9 +3,22 @@
 }
 
 .widget {
+  height: 100%;
+}
+
+.widgetFrame {
   position: absolute;
   border: 1px solid #aaa;
   z-index: 2;
+  box-sizing: border-box;
+  background-color: yellow;
+}
+
+.widgetBorderBottom {
+  position: absolute;
+  background: green;
+  width: 100%;
+  cursor: ns-resize;
 }
 
 .placeholder {

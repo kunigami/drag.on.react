@@ -11,11 +11,11 @@ module.exports = function(grunt) {
     browserify: {
       standalone: {
         src: [ 'main.js' ],
-        dest: './browser/dist/dragon-example.standalone.js',
+        dest: './dist/dragon-example.min.js',
         options: {
           browserifyOptions: {
             standalone: 'main',
-            transform: ['reactify']
+            transform: ['reactify'], //, 'uglifyify']
           }
         }
       },
