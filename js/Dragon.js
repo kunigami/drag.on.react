@@ -324,7 +324,14 @@ var Dragon = React.createClass({
     };
   },
 
-  getDraggedWidget: function() {
+  /**
+   * Returns the widget info corresponding to the dragged element, or
+   * null if we're not dragging.
+   */
+  getDraggedWidget: function() /*?object*/ {
+    if (this.state.draggedID === null) {
+      return null;
+    }
     return this.props.data[this.state.draggedID];
   },
 
