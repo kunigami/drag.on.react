@@ -369,7 +369,7 @@ var Dragon = React.createClass({
    * Whether we're in a node or a descendant of a node with class
    * 'handle'.
    */
-  isHandle: function(node) {
+  isHandle: function(node) /*boolean*/ {
     if (!node || node.classList.contains('container')) {
       return false;
     }
