@@ -332,7 +332,6 @@ var Dragon = React.createClass({
     if (this.state.draggedID === null) {
       return null;
     }
-
     return this.props.data[this.state.draggedID];
   },
 
@@ -340,7 +339,7 @@ var Dragon = React.createClass({
    * Returns an object with {top, left} representing the position of
    * an event e in cell units.
    */
-  getCellPositionFromEvent: function(e) {
+  getCellPositionFromEvent: function(e) /*object*/ {
     var relativeX = e.clientX - this.baseOffsetLeft;
     var relativeY = e.clientY - this.baseOffsetTop;
 
