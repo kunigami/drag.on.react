@@ -332,7 +332,6 @@ var Dragon = React.createClass({
     if (this.state.draggedID === null) {
       return null;
     }
-
     return this.props.data[this.state.draggedID];
   },
 
