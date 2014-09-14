@@ -13,12 +13,20 @@ var merge = require('./merge');
 /**
  * Possible states during dragging.
  */
-var DragState = {
-  'NONE':  'none',
-  'START': 'start',
-  'OVER':  'over',
-  'RESIZE_S': 'resize_s',
+var DragStage = {
+  NONE:  'none',
+  START: 'start',
+  OVER:  'over',
 };
+
+var ResizingStage = {
+  RESIZE_S: 'resize_s',
+  RESIZE_W: 'resize_w',
+  RESIZE_N: 'resize_n',
+  RESIZE_E: 'resize_e',
+};
+
+var Stage = merge(DragStage, ResizingStage);
 
 var Dragon = React.createClass({
 
@@ -53,7 +61,7 @@ var Dragon = React.createClass({
       placeholderLeft: null,
       // ID of the widget being dragged
       draggedID: null,
-      dragState: DragState.NONE,
+      stage: Stage.NONE,
       tempData: this.props.data,
     };
   },
@@ -68,8 +76,8 @@ var Dragon = React.createClass({
     var data = this.props.data;
 
     if (
-      this.state.dragState == DragState.OVER ||
-      this.state.dragState == DragState.RESIZE_S
+      this.state.stage == Stage.OVER ||
+      this.isResizingStage(this.state.stage)
     ) {
       data = this.state.tempData;
     } else {
@@ -89,7 +97,7 @@ var Dragon = React.createClass({
       var borderWidth = this.props.borderWidth;
 
       var isVisible = true;
-      if (this.state.dragState == DragState.OVER &&
+      if (this.state.stage == Stage.OVER &&
           key == this.state.draggedID) {
           isVisible = false;
       }
@@ -136,7 +144,7 @@ var Dragon = React.createClass({
       display: 'none',
     };
 
-    if (this.state.dragState == DragState.OVER) {
+    if (this.state.stage == Stage.OVER) {
       var dragged = this.getDraggedWidget();
       placeholderStyle.display = 'block';
       placeholderStyle.width = scale(dragged.width);
@@ -163,7 +171,7 @@ var Dragon = React.createClass({
         data-id="container"
         className={classNames({
           "container": true,
-          "resizeNS": this.state.dragState == DragState.RESIZE_S
+          "resizeNS": this.state.stage == Stage.RESIZE_S
         })}
         ref={"container"}
         style={containerStyle}
@@ -207,7 +215,7 @@ var Dragon = React.createClass({
     e.dataTransfer.setData("text/html", e.currentTarget);
 
     this.setState({
-      dragState: DragState.START,
+      stage: Stage.START,
       placeholderTop: draggedDOM.offsetTop,
       placeholderLeft: draggedDOM.offsetLeft,
       draggedID: draggedDOM.dataset.id,
@@ -231,7 +239,7 @@ var Dragon = React.createClass({
 
     this.setState({
       tempData: newData,
-      dragState: DragState.OVER,
+      stage: Stage.OVER,
       placeholderTop: newOffset.top,
       placeholderLeft: newOffset.left,
     });
@@ -239,7 +247,7 @@ var Dragon = React.createClass({
 
   dragEnd: function(e) {
     this.setState({
-      dragState: DragState.NONE,
+      stage: Stage.NONE,
       draggedID: null,
     });
     // Inform caller about the updated data
@@ -249,13 +257,13 @@ var Dragon = React.createClass({
   startResizing: function(id, e) {
     // TODO: implement dragging to other directions
     this.setState({
-      dragState: DragState.RESIZE_S,
+      stage: Stage.RESIZE_S,
       draggedID: id
     });
   },
 
   continueResizing: function(e) {
-    if (this.state.dragState != DragState.RESIZE_S) {
+    if (this.state.stage != Stage.RESIZE_S) {
       return;
     }
     var cellPosition = this.getCellPositionFromEvent(e);
@@ -279,12 +287,12 @@ var Dragon = React.createClass({
   },
 
   stopResizing: function(e) {
-    if (this.state.dragState != DragState.RESIZE_S) {
+    if (this.state.stage != Stage.RESIZE_S) {
       return;
     }
     this.props.onDataChange(this.state.tempData);
     this.setState({
-      dragState: DragState.NONE,
+      stage: Stage.NONE,
     });
   },
 
@@ -330,6 +338,7 @@ var Dragon = React.createClass({
    */
   getDraggedWidget: function() /*?object*/ {
     if (this.state.draggedID === null) {
+      console.log('null');
       return null;
     }
     return this.props.data[this.state.draggedID];
@@ -378,6 +387,10 @@ var Dragon = React.createClass({
     }
     return this.isHandle(node.parentNode);
   },
+
+  isResizingStage: function(stage) {
+    return ResizingStage.hasOwnProperty(stage);
+  }
 
 });
 
