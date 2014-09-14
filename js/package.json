@@ -1,5 +1,6 @@
 {
   "name": "drag.on",
+  "version": "0.0.1",
   "description": "A drag-and-drop dashboard framework built with React.js",
   "scripts": {
     "test": "jest"

@@ -47,7 +47,7 @@ var Example = React.createClass({
           onDataChange={this.updateWidgetMap}>
           <div className="body">
             <div className="handle title">
-              Title (grip3)
+              Title
             </div>
             <div className="content">
               hello world

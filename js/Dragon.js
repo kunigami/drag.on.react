@@ -6,6 +6,8 @@
  **/
 
 var Collision = require('./Collision');
+
+var classNames = require('./classNames');
 var merge = require('./merge');
 
 /**
@@ -19,10 +21,6 @@ var DragState = {
 };
 
 var Dragon = React.createClass({
-
-  // This represents a temporary state when we're during the dragging
-  // process. We don't change the props.data until the drag is done
-  tempData: {},
 
   propTypes: {
     data: React.PropTypes.object.isRequired,
@@ -39,7 +37,7 @@ var Dragon = React.createClass({
   getDefaultProps: function() {
     return {
       columnsCount: 20,
-      borderWidth: 2,
+      borderWidth: 1,
     };
   },
 
@@ -56,6 +54,7 @@ var Dragon = React.createClass({
       // ID of the widget being dragged
       draggedID: null,
       dragState: DragState.NONE,
+      tempData: this.props.data,
     };
   },
 
@@ -68,19 +67,11 @@ var Dragon = React.createClass({
     var scale = this.scale;
     var data = this.props.data;
 
-    if (this.state.dragState == DragState.OVER) {
-      var placeholderRect = this.getPlaceholderRect();
-      // Adjust other widgets to accomodate the placeholder
-      var draggedID = this.state.draggedID;
-      var newData = Collision.move(
-        this.props.data,
-        draggedID,
-        placeholderRect
-      );
-      this.tempData = newData;
-      // Do not move 'from' yet
-      this.tempData[draggedID] = this.props.data[draggedID];
-      data = this.tempData;
+    if (
+      this.state.dragState == DragState.OVER ||
+      this.state.dragState == DragState.RESIZE_S
+    ) {
+      data = this.state.tempData;
     } else {
       data = this.props.data;
     }
@@ -96,9 +87,15 @@ var Dragon = React.createClass({
       var height = scale(item.height) - 2*margin;
       var width  = scale(item.width) - 2*margin;
       var borderWidth = this.props.borderWidth;
+
+      var isVisible = true;
+      if (this.state.dragState == DragState.OVER &&
+          key == this.state.draggedID) {
+          isVisible = false;
+      }
+
       var blockStyle = {
-        // TODO: verify why this doesn't work
-        //visibility: key == this.state.draggedID ? 'hidden': 'visible',
+        display: isVisible ? 'block': 'none',
         width: width,
         height: height,
         top: scale(item.top) + margin,
@@ -128,8 +125,8 @@ var Dragon = React.createClass({
             </div>
           <div
             style={borderBottomStyle}
-            className="widgetBorderBottom"
-            onMouseDown={this.startResizing}
+            className="widgetBorder bottom"
+            onMouseDown={this.startResizing.bind(this, key)}
           />
         </div>
       );
@@ -140,15 +137,10 @@ var Dragon = React.createClass({
     };
 
     if (this.state.dragState == DragState.OVER) {
+      var dragged = this.getDraggedWidget();
       placeholderStyle.display = 'block';
-      placeholderStyle.width = this.dragged.style.width;
-      placeholderStyle.height = this.dragged.style.height;
-      placeholderStyle.top = scale(this.state.placeholderTop);
-      placeholderStyle.left = scale(this.state.placeholderLeft);
-    } else if (this.state.dragState == DragState.RESIZE_S) {
-      placeholderStyle.display = 'block';
-      placeholderStyle.width =
-      placeholderStyle.height =
+      placeholderStyle.width = scale(dragged.width);
+      placeholderStyle.height = scale(dragged.height);
       placeholderStyle.top = scale(this.state.placeholderTop);
       placeholderStyle.left = scale(this.state.placeholderLeft);
     }
@@ -157,7 +149,7 @@ var Dragon = React.createClass({
       <div
         style={placeholderStyle}
         key={"placeholder"}
-        className="widgetFrame placeholder"
+        className={classNames(["widgetFrame", "placeholder"])}
       />;
 
     listItems.push(placeholder);
@@ -169,13 +161,24 @@ var Dragon = React.createClass({
     return (
       <div
         data-id="container"
-        className="container"
+        className={classNames({
+          "container": true,
+          "resizeNS": this.state.dragState == DragState.RESIZE_S
+        })}
         ref={"container"}
         style={containerStyle}
         onDragOver={this.dragOver}>
           {listItems}
       </div>
     );
+  },
+
+  componentDidMount: function() {
+    var containerDOM    = this.refs.container.getDOMNode();
+    // Store the container offset so we can always to the math based
+    // on the container's offset
+    this.baseOffsetTop  = containerDOM.offsetTop;
+    this.baseOffsetLeft = containerDOM.offsetLeft;
   },
 
   /****************************************************************************
@@ -187,11 +190,11 @@ var Dragon = React.createClass({
   },
 
   dragStart: function(e) {
-    this.dragged   = e.currentTarget;
+    var draggedDOM = e.currentTarget;
     this.startX    = e.clientX;
     this.startY    = e.clientY;
-    this.startTop  = this.dragged.offsetTop;
-    this.startLeft = this.dragged.offsetLeft;
+    this.startTop  = draggedDOM.offsetTop;
+    this.startLeft = draggedDOM.offsetLeft;
     e.dataTransfer.effectAllowed = 'move';
     // Only allow dragging from the handle
     if (!this.isHandle(this.target)) {
@@ -205,17 +208,29 @@ var Dragon = React.createClass({
 
     this.setState({
       dragState: DragState.START,
-      placeholderTop: this.dragged.offsetTop,
-      placeholderLeft: this.dragged.offsetLeft,
-      draggedID: this.dragged.dataset.id,
+      placeholderTop: draggedDOM.offsetTop,
+      placeholderLeft: draggedDOM.offsetLeft,
+      draggedID: draggedDOM.dataset.id,
     });
   },
 
   dragOver: function(e) {
     e.preventDefault();
-    var newOffset = this.getCellPositionFromEvent(e);
-    this.dragged.style.display = 'none';
+    var newOffset = this.getWidgetOffsetFromEvent(e);
+
+    var placeholderRect = this.getPlaceholderRect();
+    // Adjust other widgets to accomodate the placeholder
+    var draggedID = this.state.draggedID;
+    var newData = Collision.move(
+      this.props.data,
+      draggedID,
+      placeholderRect
+    );
+    // Do not move the dragged element yet
+    newData[draggedID] = newData[draggedID];
+
     this.setState({
+      tempData: newData,
       dragState: DragState.OVER,
       placeholderTop: newOffset.top,
       placeholderLeft: newOffset.left,
@@ -223,25 +238,19 @@ var Dragon = React.createClass({
   },
 
   dragEnd: function(e) {
-    this.dragged.style.display = "block";
-
-    var data = this.props.data;
-    var from = Number(this.dragged.dataset.id);
-
-    data[from].top = this.state.placeholderTop;
-    data[from].left = this.state.placeholderLeft;
-
     this.setState({
       dragState: DragState.NONE,
+      draggedID: null,
     });
     // Inform caller about the updated data
-    this.props.onDataChange(this.tempData);
-    return;
+    this.props.onDataChange(this.state.tempData);
   },
 
-  startResizing: function(e) {
+  startResizing: function(id, e) {
+    // TODO: implement dragging to other directions
     this.setState({
-      dragState: DragState.RESIZE_S
+      dragState: DragState.RESIZE_S,
+      draggedID: id
     });
   },
 
@@ -249,15 +258,31 @@ var Dragon = React.createClass({
     if (this.state.dragState != DragState.RESIZE_S) {
       return;
     }
-    var containerDOM = this.refs.container.getDOMNode();
-    var x = e.clientX - containerDOM.offsetLeft;
-    var y = e.clientY - containerDOM.offsetTop;
+    var cellPosition = this.getCellPositionFromEvent(e);
+    console.log(cellPosition);
+    var dragged = this.getDraggedWidget();
+    console.log('current height: ' + dragged.height);
+    var top =  dragged.top;
+    var newHeight = cellPosition.top - top;
+
+    var newDragged = merge({}, dragged);
+    newDragged.height = newHeight;
+    console.log(newDragged);
+    // Adjust other widgets to accomodate the new size
+    var draggedID = this.state.draggedID;
+    var newData = Collision.move(
+      this.props.data,
+      draggedID,
+      newDragged
+    );
+    this.setState({tempData: newData});
   },
 
   stopResizing: function(e) {
     if (this.state.dragState != DragState.RESIZE_S) {
       return;
     }
+    this.props.onDataChange(this.state.tempData);
     this.setState({
       dragState: DragState.NONE,
     });
@@ -283,11 +308,11 @@ var Dragon = React.createClass({
     return Math.round(x/this.getCellSizeInPx());
   },
 
-  getCellPositionFromEvent: function(e) {
+  getWidgetOffsetFromEvent: function(e) {
     // Displacement since started dragging
     var deltaX = e.clientX - this.startX;
     var deltaY = e.clientY - this.startY;
-    // New offset
+
     var newTopPx  = this.startTop + deltaY;
     var newLeftPx = this.startLeft + deltaX;
     var unscale = this.unscale;
@@ -299,20 +324,44 @@ var Dragon = React.createClass({
     };
   },
 
+  getDraggedWidget: function() {
+    return this.props.data[this.state.draggedID];
+  },
+
+  /**
+   * Returns an object with {top, left} representing the position of
+   * an event e in cell units.
+   */
+  getCellPositionFromEvent: function(e) {
+    var relativeX = e.clientX - this.baseOffsetLeft;
+    var relativeY = e.clientY - this.baseOffsetTop;
+
+    var unscale = this.unscale;
+    var newTop = unscale(relativeY);
+    var newLeft = unscale(relativeX);
+    return {
+      'top': newTop,
+      'left': newLeft,
+    };
+  },
+
   /**
    * Get a rectangle representing the placeholder.
    */
   getPlaceholderRect: function() {
-    var from = Number(this.dragged.dataset.id);
-    var fromRect = this.props.data[from];
+    var draggedWidget = this.getDraggedWidget();
     return {
       left: this.state.placeholderLeft,
       top: this.state.placeholderTop,
-      width: fromRect.width,
-      height: fromRect.height,
+      width: draggedWidget.width,
+      height: draggedWidget.height,
     };
   },
 
+  /**
+   * Whether we're in a node or a descendant of a node with class
+   * 'handle'.
+   */
   isHandle: function(node) {
     if (!node || node.classList.contains('container')) {
       return false;
@@ -321,7 +370,8 @@ var Dragon = React.createClass({
       return true;
     }
     return this.isHandle(node.parentNode);
-  }
+  },
+
 });
 
 module.exports = Dragon;
