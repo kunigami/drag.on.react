@@ -13,12 +13,20 @@ var merge = require('./merge');
 /**
  * Possible states during dragging.
  */
-var DragState = {
-  'NONE':  'none',
-  'START': 'start',
-  'OVER':  'over',
-  'RESIZE_S': 'resize_s',
+var DragStage = {
+  NONE:  'none',
+  START: 'start',
+  OVER:  'over',
 };
+
+var ResizingStage = {
+  RESIZE_S: 'resize_s',
+  RESIZE_W: 'resize_w',
+  RESIZE_N: 'resize_n',
+  RESIZE_E: 'resize_e',
+};
+
+var Stage = merge(DragStage, ResizingStage);
 
 var Dragon = React.createClass({
 
@@ -53,7 +61,7 @@ var Dragon = React.createClass({
       placeholderLeft: null,
       // ID of the widget being dragged
       draggedID: null,
-      dragState: DragState.NONE,
+      stage: Stage.NONE,
       tempData: this.props.data,
     };
   },
@@ -68,8 +76,8 @@ var Dragon = React.createClass({
     var data = this.props.data;
 
     if (
-      this.state.dragState == DragState.OVER ||
-      this.state.dragState == DragState.RESIZE_S
+      this.state.stage == Stage.OVER ||
+      this.isResizingStage(this.state.stage)
     ) {
       data = this.state.tempData;
     } else {
@@ -89,7 +97,7 @@ var Dragon = React.createClass({
       var borderWidth = this.props.borderWidth;
 
       var isVisible = true;
-      if (this.state.dragState == DragState.OVER &&
+      if (this.state.stage == Stage.OVER &&
           key == this.state.draggedID) {
           isVisible = false;
       }
@@ -106,7 +114,22 @@ var Dragon = React.createClass({
         height: borderWidth,
         top: height - borderWidth,
         left: 0,
-      }
+      };
+      var borderRightStyle = {
+        left: width - borderWidth,
+        top: 0,
+        width: borderWidth,
+      };
+      var borderTopStyle = {
+        left: 0,
+        top: 0,
+        height: borderWidth,
+      };
+      var borderLeftStyle = {
+        left: 0,
+        top: 0,
+        width: borderWidth,
+      };
       this.props.children.containerHeight = height;
       this.props.children.containerWidth = width;
       return (
@@ -126,7 +149,22 @@ var Dragon = React.createClass({
           <div
             style={borderBottomStyle}
             className="widgetBorder bottom"
-            onMouseDown={this.startResizing.bind(this, key)}
+            onMouseDown={this.startResizing.bind(this, key, ResizingStage.RESIZE_S)}
+          />
+          <div
+            style={borderRightStyle}
+            className="widgetBorder right"
+            onMouseDown={this.startResizing.bind(this, key, ResizingStage.RESIZE_E)}
+          />
+          <div
+            style={borderTopStyle}
+            className="widgetBorder top"
+            onMouseDown={this.startResizing.bind(this, key, ResizingStage.RESIZE_N)}
+          />
+          <div
+            style={borderLeftStyle}
+            className="widgetBorder left"
+            onMouseDown={this.startResizing.bind(this, key, ResizingStage.RESIZE_W)}
           />
         </div>
       );
@@ -136,7 +174,7 @@ var Dragon = React.createClass({
       display: 'none',
     };
 
-    if (this.state.dragState == DragState.OVER) {
+    if (this.state.stage == Stage.OVER) {
       var dragged = this.getDraggedWidget();
       placeholderStyle.display = 'block';
       placeholderStyle.width = scale(dragged.width);
@@ -161,10 +199,10 @@ var Dragon = React.createClass({
     return (
       <div
         data-id="container"
-        className={classNames({
-          "container": true,
-          "resizeNS": this.state.dragState == DragState.RESIZE_S
-        })}
+        className={classNames([
+          "container",
+          this.getClassNameFromResizeStage(this.state.stage)
+        ])}
         ref={"container"}
         style={containerStyle}
         onDragOver={this.dragOver}>
@@ -207,7 +245,7 @@ var Dragon = React.createClass({
     e.dataTransfer.setData("text/html", e.currentTarget);
 
     this.setState({
-      dragState: DragState.START,
+      stage: Stage.START,
       placeholderTop: draggedDOM.offsetTop,
       placeholderLeft: draggedDOM.offsetLeft,
       draggedID: draggedDOM.dataset.id,
@@ -231,7 +269,7 @@ var Dragon = React.createClass({
 
     this.setState({
       tempData: newData,
-      dragState: DragState.OVER,
+      stage: Stage.OVER,
       placeholderTop: newOffset.top,
       placeholderLeft: newOffset.left,
     });
@@ -239,35 +277,52 @@ var Dragon = React.createClass({
 
   dragEnd: function(e) {
     this.setState({
-      dragState: DragState.NONE,
+      stage: Stage.NONE,
       draggedID: null,
     });
     // Inform caller about the updated data
     this.props.onDataChange(this.state.tempData);
   },
 
-  startResizing: function(id, e) {
+  startResizing: function(id, stage, e) {
     // TODO: implement dragging to other directions
     this.setState({
-      dragState: DragState.RESIZE_S,
+      stage: stage,
       draggedID: id
     });
   },
 
   continueResizing: function(e) {
-    if (this.state.dragState != DragState.RESIZE_S) {
+    if (!this.isResizingStage(this.state.stage)) {
       return;
     }
     var cellPosition = this.getCellPositionFromEvent(e);
-    console.log(cellPosition);
     var dragged = this.getDraggedWidget();
-    console.log('current height: ' + dragged.height);
-    var top =  dragged.top;
-    var newHeight = cellPosition.top - top;
 
     var newDragged = merge({}, dragged);
-    newDragged.height = newHeight;
-    console.log(newDragged);
+    switch (this.state.stage) {
+      case ResizingStage.RESIZE_S:
+        var newHeight = cellPosition.top - dragged.top;
+        newDragged.height = newHeight;
+        break;
+      case ResizingStage.RESIZE_E:
+        var newWidth = cellPosition.left - dragged.left;
+        newDragged.width = newWidth;
+        break;
+      case ResizingStage.RESIZE_N:
+        var newTop = cellPosition.top;
+        var newHeight = dragged.height + (dragged.top - cellPosition.top);
+        newDragged.height = newHeight;
+        newDragged.top = newTop;
+        break;
+      case ResizingStage.RESIZE_W:
+        var newLeft = cellPosition.left;
+        var newWidth = dragged.width + (dragged.left - cellPosition.left);
+        newDragged.width = newWidth;
+        newDragged.left = newLeft;
+        break;
+    }
+
     // Adjust other widgets to accomodate the new size
     var draggedID = this.state.draggedID;
     var newData = Collision.move(
@@ -279,12 +334,12 @@ var Dragon = React.createClass({
   },
 
   stopResizing: function(e) {
-    if (this.state.dragState != DragState.RESIZE_S) {
+    if (!this.isResizingStage(this.state.stage)) {
       return;
     }
     this.props.onDataChange(this.state.tempData);
     this.setState({
-      dragState: DragState.NONE,
+      stage: Stage.NONE,
     });
   },
 
@@ -369,7 +424,7 @@ var Dragon = React.createClass({
    * Whether we're in a node or a descendant of a node with class
    * 'handle'.
    */
-  isHandle: function(node) {
+  isHandle: function(node) /*boolean*/ {
     if (!node || node.classList.contains('container')) {
       return false;
     }
@@ -378,6 +433,24 @@ var Dragon = React.createClass({
     }
     return this.isHandle(node.parentNode);
   },
+
+  isResizingStage: function(stage) {
+    for (var stageName in ResizingStage) {
+      if (ResizingStage[stageName] === stage) {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  getClassNameFromResizeStage: function(stage) {
+    var classNames = {};
+    classNames[Stage.RESIZE_S] = 'resizeNS';
+    classNames[Stage.RESIZE_N] = 'resizeNS';
+    classNames[Stage.RESIZE_E] = 'resizeEW';
+    classNames[Stage.RESIZE_W] = 'resizeEW';
+    return classNames[stage] || '';
+  }
 
 });
 

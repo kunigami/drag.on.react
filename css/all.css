@@ -12,6 +12,10 @@
   cursor: ns-resize;
 }
 
+.container.resizeEW {
+  cursor: ew-resize;
+}
+
 .widget {
   height: 100%;
 }
@@ -23,12 +27,21 @@
   background-color: #aaa;
 }
 
-.widgetBorder.bottom {
+.widgetBorder.bottom,
+.widgetBorder.top {
   position: absolute;
   width: 100%;
   cursor: ns-resize;
   /* To increase the grip area. This should be transparent*/
   padding: 3px 0 3px 0;
+}
+.widgetBorder.right,
+.widgetBorder.left {
+  position: absolute;
+  height: 100%;
+  cursor: ew-resize;
+  /* To increase the grip area. This should be transparent*/
+  padding: 0 3px 0 3px;
 }
 
 .placeholder {
