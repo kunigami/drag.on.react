@@ -229,8 +229,8 @@ var Dragon = React.createClass({
 
   dragStart: function(e) {
     var draggedDOM = e.currentTarget;
-    this.startX    = e.clientX;
-    this.startY    = e.clientY;
+    this.startX    = e.pageX;
+    this.startY    = e.pageY;
     this.startTop  = draggedDOM.offsetTop;
     this.startLeft = draggedDOM.offsetLeft;
     e.dataTransfer.effectAllowed = 'move';
@@ -365,8 +365,8 @@ var Dragon = React.createClass({
 
   getWidgetOffsetFromEvent: function(e) {
     // Displacement since started dragging
-    var deltaX = e.clientX - this.startX;
-    var deltaY = e.clientY - this.startY;
+    var deltaX = e.pageX - this.startX;
+    var deltaY = e.pageY - this.startY;
 
     var newTopPx  = this.startTop + deltaY;
     var newLeftPx = this.startLeft + deltaX;
@@ -395,8 +395,8 @@ var Dragon = React.createClass({
    * an event e in cell units.
    */
   getCellPositionFromEvent: function(e) /*object*/ {
-    var relativeX = e.clientX - this.baseOffsetLeft;
-    var relativeY = e.clientY - this.baseOffsetTop;
+    var relativeX = e.pageX - this.baseOffsetLeft;
+    var relativeY = e.pageY - this.baseOffsetTop;
 
     var unscale = this.unscale;
     var newTop = unscale(relativeY);
