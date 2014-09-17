@@ -5,7 +5,7 @@ module.exports = function(grunt) {
     watch: {
       browser_js: {
         files: ['**/*.js', '!node_modules/**/*'],
-        tasks: ['browserify'],
+        tasks: ['browserify:debug'],
       }
     },
     browserify: {
@@ -15,10 +15,20 @@ module.exports = function(grunt) {
         options: {
           browserifyOptions: {
             standalone: 'main',
-            transform: ['reactify'], //, 'uglifyify']
+            transform: ['reactify', 'uglifyify']
           }
         }
       },
+      debug: {
+        src: [ 'main.js' ],
+        dest: './dist/dragon-example.js',
+        options: {
+          browserifyOptions: {
+            standalone: 'main',
+            transform: ['reactify']
+          }
+        }
+      }
     },
     jshint: {
       files: [

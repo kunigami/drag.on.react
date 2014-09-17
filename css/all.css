@@ -50,11 +50,6 @@
   z-index: 1;
 }
 
-.body {
-  height: 100%;
-  position: relative;
-}
-
 .content {
   background-color: #fff;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
