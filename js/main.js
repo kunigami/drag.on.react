@@ -4,6 +4,7 @@
  **/
 
 var Dragon = require('./Dragon');
+var DragonWidget = require('./DragonWidget');
 
 // Example with a list of hard-coded with these widgets
 var widgets = {
@@ -37,22 +38,29 @@ var Example = React.createClass({
   },
 
   render: function() {
+    var widgetsReact = [];
+    for (var widgetId in this.state.widgetMap) {
+      var widgetReact =
+        <DragonWidget
+          key={widgetId}
+          data={this.state.widgetMap[widgetId]}>
+          <div className="handle title">
+            {"Title " + widgetId}
+          </div>
+          <div className="content">
+            hello world
+          </div>
+        </DragonWidget>;
+      widgetsReact.push(widgetReact);
+    }
     return (
       <div>
         <h1>Drag.on - A Drag-n-drop dashboard framework</h1>
         <Dragon
-          data={this.state.widgetMap}
           width={800}
           height={600}
           onDataChange={this.updateWidgetMap}>
-          <div className="body">
-            <div className="handle title">
-              Title
-            </div>
-            <div className="content">
-              hello world
-            </div>
-          </div>
+          {widgetsReact}
         </Dragon>
       </div>
     );

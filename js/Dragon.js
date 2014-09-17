@@ -31,7 +31,6 @@ var Stage = merge(DragStage, ResizingStage);
 var Dragon = React.createClass({
 
   propTypes: {
-    data: React.PropTypes.object.isRequired,
     width: React.PropTypes.number,
     height: React.PropTypes.number,
     // How may columns our grid has. Controls the granularity of the
@@ -40,6 +39,7 @@ var Dragon = React.createClass({
     margin: React.PropTypes.number,
     onDataChange: React.PropTypes.func.isRequired,
     borderWidth: React.PropTypes.number,
+    // TODO: enforce children's type
   },
 
   getDefaultProps: function() {
@@ -62,18 +62,13 @@ var Dragon = React.createClass({
       // ID of the widget being dragged
       draggedID: null,
       stage: Stage.NONE,
-      tempData: this.props.data,
+      tempData: this.data,
     };
-  },
-
-  shouldComponentUpdate: function(nextProps, nextState) {
-    // TODO: optimize and return false if nothing changed
-    return true;
   },
 
   render: function() {
     var scale = this.scale;
-    var data = this.props.data;
+    var data = this.data;
 
     if (
       this.state.stage == Stage.OVER ||
@@ -81,7 +76,7 @@ var Dragon = React.createClass({
     ) {
       data = this.state.tempData;
     } else {
-      data = this.props.data;
+      data = this.data;
     }
 
     var margin = this.props.margin;
@@ -89,8 +84,8 @@ var Dragon = React.createClass({
       margin = this.getCellSizeInPx() * 0.05;
     }
 
-    var widgetKeys = Object.keys(data);
-    var listItems = widgetKeys.map(function(key) {
+    var listItems = this.props.children.map(function(widgetReact) {
+      var key  = widgetReact.props.key;
       var item = data[key];
       var height = scale(item.height) - 2*margin;
       var width  = scale(item.width) - 2*margin;
@@ -130,8 +125,6 @@ var Dragon = React.createClass({
         top: 0,
         width: borderWidth,
       };
-      this.props.children.containerHeight = height;
-      this.props.children.containerWidth = width;
       return (
         <div
           key={key}
@@ -142,10 +135,7 @@ var Dragon = React.createClass({
           onMouseDown={this.registerClick}
           onDragEnd={this.dragEnd}
           onDragStart={this.dragStart}>
-          <div
-            className="widget">
-              {this.props.children}
-            </div>
+          {widgetReact}
           <div
             style={borderBottomStyle}
             className="widgetBorder bottom"
@@ -211,6 +201,14 @@ var Dragon = React.createClass({
     );
   },
 
+  componentWillMount: function() {
+    this.data = this.getDataFromWidgets(this.props.children);
+  },
+
+  componentWillReceiveProps: function(nextProps) {
+    this.data = this.getDataFromWidgets(nextProps.children);
+  },
+
   componentDidMount: function() {
     var containerDOM    = this.refs.container.getDOMNode();
     // Store the container offset so we can always to the math based
@@ -260,7 +258,7 @@ var Dragon = React.createClass({
     // Adjust other widgets to accomodate the placeholder
     var draggedID = this.state.draggedID;
     var newData = Collision.move(
-      this.props.data,
+      this.data,
       draggedID,
       placeholderRect
     );
@@ -326,7 +324,7 @@ var Dragon = React.createClass({
     // Adjust other widgets to accomodate the new size
     var draggedID = this.state.draggedID;
     var newData = Collision.move(
-      this.props.data,
+      this.data,
       draggedID,
       newDragged
     );
@@ -387,7 +385,7 @@ var Dragon = React.createClass({
     if (this.state.draggedID === null) {
       return null;
     }
-    return this.props.data[this.state.draggedID];
+    return this.data[this.state.draggedID];
   },
 
   /**
@@ -450,6 +448,14 @@ var Dragon = React.createClass({
     classNames[Stage.RESIZE_E] = 'resizeEW';
     classNames[Stage.RESIZE_W] = 'resizeEW';
     return classNames[stage] || '';
+  },
+
+  getDataFromWidgets: function(widgetsReact) {
+    var data = {};
+    widgetsReact.forEach(function(widgetReact) {
+      data[widgetReact.props.key] = widgetReact.props.data;
+    });
+    return data;
   }
 
 });
