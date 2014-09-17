@@ -1,6 +1,10 @@
 drag.on.react
 =============
 
+![Figure 1: Sample dashboard](https://cloud.githubusercontent.com/assets/782222/4299745/452aeff0-3e3b-11e4-9d4e-78d7efbd7867.png)
+
+You can try out an example [here](http://jsfiddle.net/kunigami/62at3b42/embedded/result/) 
+
 Usage
 -----
 
