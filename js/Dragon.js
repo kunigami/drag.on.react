@@ -24,6 +24,7 @@ var ResizingStage = {
   RESIZE_W: 'resize_w',
   RESIZE_N: 'resize_n',
   RESIZE_E: 'resize_e',
+  RESIZE_SE: 'resize_se',
 };
 
 var Stage = merge(DragStage, ResizingStage);
@@ -154,6 +155,11 @@ var Dragon = React.createClass({
           <div
             style={borderLeftStyle}
             className="widgetBorder left"
+            onMouseDown={this.startResizing.bind(this, key, ResizingStage.RESIZE_W)}
+          />
+          <div
+            style={borderLeftStyle}
+            className="widgetBorder bottom_right"
             onMouseDown={this.startResizing.bind(this, key, ResizingStage.RESIZE_W)}
           />
         </div>
