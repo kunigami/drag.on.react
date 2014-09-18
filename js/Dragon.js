@@ -24,6 +24,10 @@ var ResizingStage = {
   RESIZE_W: 'resize_w',
   RESIZE_N: 'resize_n',
   RESIZE_E: 'resize_e',
+  RESIZE_SE: 'resize_se',
+  RESIZE_SW: 'resize_sw',
+  RESIZE_NW: 'resize_nw',
+  RESIZE_NE: 'resize_ne',
 };
 
 var Stage = merge(DragStage, ResizingStage);
@@ -90,6 +94,7 @@ var Dragon = React.createClass({
       var height = scale(item.height) - 2*margin;
       var width  = scale(item.width) - 2*margin;
       var borderWidth = this.props.borderWidth;
+      var resizeGripWidth = 4;
 
       var isVisible = true;
       if (this.state.stage == Stage.OVER &&
@@ -106,24 +111,48 @@ var Dragon = React.createClass({
         padding: borderWidth
       };
       var borderBottomStyle = {
-        height: borderWidth,
-        top: height - borderWidth,
+        height: resizeGripWidth,
+        top: height - resizeGripWidth,
         left: 0,
       };
       var borderRightStyle = {
-        left: width - borderWidth,
+        left: width - resizeGripWidth,
         top: 0,
-        width: borderWidth,
+        width: resizeGripWidth,
       };
       var borderTopStyle = {
         left: 0,
         top: 0,
-        height: borderWidth,
+        height: resizeGripWidth,
       };
       var borderLeftStyle = {
         left: 0,
         top: 0,
-        width: borderWidth,
+        width: resizeGripWidth,
+      };
+      var borderBottomRightStyle = {
+        left: width - resizeGripWidth,
+        top: height - resizeGripWidth,
+        width: resizeGripWidth,
+        height: resizeGripWidth,
+      };
+      var borderBottomLeftStyle = {
+        left: 0,
+        top: height - resizeGripWidth,
+        width: resizeGripWidth,
+        height: resizeGripWidth,
+      };
+      var borderTopLeftStyle = {
+        left: 0,
+        top: 0,
+        width: resizeGripWidth,
+        height: resizeGripWidth,
+      };
+      var borderTopRightStyle = {
+        left: width - resizeGripWidth,
+        top: 0,
+        width: resizeGripWidth,
+        height: resizeGripWidth,
       };
       return (
         <div
@@ -155,6 +184,26 @@ var Dragon = React.createClass({
             style={borderLeftStyle}
             className="widgetBorder left"
             onMouseDown={this.startResizing.bind(this, key, ResizingStage.RESIZE_W)}
+          />
+          <div
+            style={borderBottomRightStyle}
+            className="widgetBorder bottomRight corner"
+            onMouseDown={this.startResizing.bind(this, key, ResizingStage.RESIZE_SE)}
+          />
+          <div
+            style={borderBottomLeftStyle}
+            className="widgetBorder bottomLeft corner"
+            onMouseDown={this.startResizing.bind(this, key, ResizingStage.RESIZE_SW)}
+          />
+          <div
+            style={borderTopLeftStyle}
+            className="widgetBorder topLeft corner"
+            onMouseDown={this.startResizing.bind(this, key, ResizingStage.RESIZE_NW)}
+          />
+          <div
+            style={borderTopRightStyle}
+            className="widgetBorder topRight corner"
+            onMouseDown={this.startResizing.bind(this, key, ResizingStage.RESIZE_NE)}
           />
         </div>
       );
@@ -319,6 +368,38 @@ var Dragon = React.createClass({
         newDragged.width = newWidth;
         newDragged.left = newLeft;
         break;
+      case ResizingStage.RESIZE_SE:
+        var newHeight = cellPosition.top - dragged.top;
+        var newWidth = cellPosition.left - dragged.left;
+        newDragged.height = newHeight;
+        newDragged.width = newWidth;
+        break;
+      case ResizingStage.RESIZE_SW:
+        var newLeft = cellPosition.left;
+        var newWidth = dragged.width + (dragged.left - cellPosition.left);
+        var newHeight = cellPosition.top - dragged.top;
+        newDragged.height = newHeight;
+        newDragged.width = newWidth;
+        newDragged.left = newLeft;
+        break;
+      case ResizingStage.RESIZE_NW:
+        var newLeft = cellPosition.left;
+        var newWidth = dragged.width + (dragged.left - cellPosition.left);
+        var newHeight = dragged.height + (dragged.top - cellPosition.top);
+        var newTop = cellPosition.top;
+        newDragged.height = newHeight;
+        newDragged.width = newWidth;
+        newDragged.left = newLeft;
+        newDragged.top = newTop;
+        break;
+      case ResizingStage.RESIZE_NE:
+        var newHeight = dragged.height + (dragged.top - cellPosition.top);
+        var newWidth = cellPosition.left - dragged.left;
+        var newTop = cellPosition.top;
+        newDragged.height = newHeight;
+        newDragged.width = newWidth;
+        newDragged.top = newTop;
+        break;
     }
 
     // Adjust other widgets to accomodate the new size
@@ -447,6 +528,10 @@ var Dragon = React.createClass({
     classNames[Stage.RESIZE_N] = 'resizeNS';
     classNames[Stage.RESIZE_E] = 'resizeEW';
     classNames[Stage.RESIZE_W] = 'resizeEW';
+    classNames[Stage.RESIZE_SE] = 'resizeNWSE';
+    classNames[Stage.RESIZE_NW] = 'resizeNWSE';
+    classNames[Stage.RESIZE_NE] = 'resizeNESW';
+    classNames[Stage.RESIZE_SW] = 'resizeNESW';
     return classNames[stage] || '';
   },
 

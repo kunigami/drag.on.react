@@ -1,5 +1,5 @@
 .html {
-  box-sizing: border-box
+  box-sizing: border-box;
 }
 
 .container {
@@ -11,9 +11,14 @@
 .container.resizeNS {
   cursor: ns-resize;
 }
-
 .container.resizeEW {
   cursor: ew-resize;
+}
+.container.resizeNWSE {
+  cursor: nwse-resize;
+}
+.container.resizeNESW {
+  cursor: nesw-resize;
 }
 
 .widget {
@@ -27,21 +32,33 @@
   background-color: #aaa;
 }
 
+.widgetBorder {
+  position: absolute;
+}
+
 .widgetBorder.bottom,
 .widgetBorder.top {
-  position: absolute;
   width: 100%;
   cursor: ns-resize;
-  /* To increase the grip area. This should be transparent*/
-  padding: 3px 0 3px 0;
 }
 .widgetBorder.right,
 .widgetBorder.left {
-  position: absolute;
   height: 100%;
   cursor: ew-resize;
-  /* To increase the grip area. This should be transparent*/
-  padding: 0 3px 0 3px;
+}
+
+.widgetBorder.corner {
+  z-index: 3; /* should be on top of the other borders */
+}
+
+.widgetBorder.bottomRight,
+.widgetBorder.topLeft {
+  cursor: nwse-resize;
+}
+
+.widgetBorder.bottomLeft,
+.widgetBorder.topRight {
+  cursor: nesw-resize;
 }
 
 .placeholder {
